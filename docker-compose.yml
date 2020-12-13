@@ -1,12 +1,12 @@
 version: '3'
 
 networks:
-  birdbord_laravel:
+  birdboard_laravel:
 
 services:
   nginx:
     image: nginx:stable-alpine
-    container_name: birdbord_laravel_nginx
+    container_name: birdboard_laravel_nginx
     ports:
       - "8088:80"
     volumes:
@@ -16,11 +16,11 @@ services:
       - php
       - mysql
     networks:
-      - birdbord_laravel
+      - birdboard_laravel
   
   mysql:
     image: mysql:5.7.22
-    container_name: birdbord_laravel_mysql
+    container_name: birdboard_laravel_mysql
     restart: unless-stopped
     tty: true
     ports:
@@ -28,23 +28,56 @@ services:
     volumes:
      - ./mysql:/var/lib/mysql
     environment:
-      MYSQL_DATABASE: birdbord_laravel
+      MYSQL_DATABASE: birdboard_laravel
       MYSQL_USER: diegovilla
-      MYSQL_PASSWORD: birdbord_laravel
-      MYSQL_ROOT_PASSWORD: birdbord_laravel
+      MYSQL_PASSWORD: birdboard_laravel
+      MYSQL_ROOT_PASSWORD: birdboard_laravel
       SERVICE_TAGS: dev
       SERVICE_NAME: mysql
     networks:
-      - birdbord_laravel
+      - birdboard_laravel
   
   php:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: birdbord_laravel_php
+    container_name: birdboard_laravel_php
     volumes:
       - ./src:/var/www/html
     ports:
       - "9000:9000"
     networks:
-      - birdbord_laravel
+      - birdboard_laravel
+
+  composer:
+    image: composer:latest
+    container_name: birdboard_laravel_composer
+    volumes:
+      - ./src:/var/www/html
+    working_dir: /var/www/html
+    networks: 
+      - birdboard_laravel
+
+  npm:
+    image: node:13.7
+    container_name: birdboard_laravel_npm
+    volumes:
+      - ./src:/var/www/html
+    working_dir: /var/www/html
+    entrypoint: ['npm']
+    networks: 
+      - birdboard_laravel
+
+  artisan:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: birdboard_laravel_artisan
+    volumes:
+      - ./src:/var/www/html
+    depends_on:
+      - mysql
+    working_dir: /var/www/html
+    entrypoint: ['/var/www/html/artisan']
+    networks: 
+      - birdboard_laravel
